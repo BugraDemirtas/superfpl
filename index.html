@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SüperLig FPL</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+</head>
+
+<body>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+    crossorigin="anonymous"></script>
+
+
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">SüperLig FPL</a>
+      <div class="d-flex">
+        <button class="btn btn-outline-light ms-auto" onclick="location.reload()">Yenile</button>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- Standings -->
+    <div class="mt-5">
+      <h1>Süper Lig FPL Puan Durumu</h1>
+      <div id="standings-table" class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Sıra</th>
+              <th>İsim-Takım</th>
+              <th>GW Puanı</th>
+              <th>Toplam Puan</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Satırlar buraya gelecek -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <!-- Standings  END -->
+
+
+    <!-- Selected Player History -->
+    <h2 class="mt-5">Özet</h2>
+    <div class="table-responsive">
+      <table id="history-table" class="table table-striped">
+        <thead>
+          <tr>
+            <th>GW</th>
+            <th>Puan</th>
+            <th>Total Puan</th>
+
+          </tr>
+        </thead>
+        <tbody>
+          <!-- History satırları buraya gelecek -->
+        </tbody>
+      </table>
+    </div>
+    </div>
+  </main>
+
+  <!-- Selected Player History END-->
+
+  <!-- Weekly Grid -->
+  <h2 class="mt-5">Haftalık Toplamlar</h2>
+  <div id="weekly-grid-container" class="table-responsive">
+    <table id="weekly-grid" class="table table-bordered table-striped">
+      <thead id="weekly-grid-head">
+        <tr>
+          <th>Player Name</th>
+        </tr>
+      </thead>
+      <tbody id="weekly-grid-body"></tbody>
+    </table>
+  </div>
+  </div>
+  <!-- Weekly Grid END -->
+
+  <script>
+    const standingsTableBody = document.querySelector('#standings-table tbody');
+    const historyTableBody = document.querySelector('#history-table tbody');
+
+    async function fetchStandings() {
+      try {
+        const url = 'https://cors-anywhere.com/https://fantasy.premierleague.com/api/leagues-classic/703668/standings/';
+        const res = await fetch(url);
+        const data = await res.json();
+        const results = data.standings.results;
+
+        results.forEach(item => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+          <td>${item.rank}</td>
+          <td>${item.player_name} </br> ${item.entry_name} </td>
+          <td>${item.event_total}</td>
+          <td>${item.total}</td>
+        `;
+          tr.style.cursor = 'pointer';
+          tr.addEventListener('click', () => fetchHistory(item.entry, item.player_name));
+          standingsTableBody.appendChild(tr);
+        });
+        buildWeeklyTopGrid(results);
+
+      } catch (err) {
+        console.error('Error fetching standings:', err);
+      }
+    }
+
+    async function fetchHistory(entryId, playerName) {
+      try {
+        const url = `https://cors-anywhere.com/https://fantasy.premierleague.com/api/entry/${entryId}/history/`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        // Mevcut tabloyu temizle
+        historyTableBody.innerHTML = '';
+
+        data.current.forEach(item => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+          <td>${item.event}</td>
+          <td>${item.points}</td>
+          <td>${item.total_points}</td>
+        `;
+          historyTableBody.appendChild(tr);
+        });
+
+        // Opsiyonel: üstte hangi oyuncu seçildiğini gösterebilirsin
+        document.querySelector('h2').textContent = `${playerName} Tüm Özeti`;
+
+      } catch (err) {
+        console.error('Error fetching history:', err);
+      }
+    }
+
+
+async function buildWeeklyTopGrid(players) {
+  try {
+    const batchSize = 5;
+    let allHistory = [];
+
+    // Tüm oyuncuların history'sini batch ile çek
+    for (let i = 0; i < players.length; i += batchSize) {
+      const batch = players.slice(i, i + batchSize);
+
+      const batchResults = await Promise.all(batch.map(async p => {
+        try {
+          const url = `https://cors-anywhere.com/https://fantasy.premierleague.com/api/entry/${p.entry}/history/`;
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+          const data = await res.json();
+          return { player_name: p.player_name, history: data.current };
+        } catch (e) {
+          console.warn(`Failed fetching ${p.player_name}:`, e);
+          return { player_name: p.player_name, history: [] };
+        }
+      }));
+
+      allHistory = allHistory.concat(batchResults);
+    }
+
+    // Haftalara göre en yüksek puanı alan oyuncular
+    let maxGW = Math.max(...allHistory.map(p => p.history.length));
+    const topPerGW = [];
+
+    for (let gw = 1; gw <= maxGW; gw++) {
+      let topPlayer = { player_name: 'N/A', points: -1 };
+      allHistory.forEach(p => {
+        const gwData = p.history.find(h => h.event === gw);
+        if (gwData && gwData.points > topPlayer.points) {
+          topPlayer = { player_name: p.player_name, points: gwData.points };
+        }
+      });
+      topPerGW.push({ gw, player: topPlayer.player_name ,points : topPlayer.points});
+    }
+
+    // Tabloyu oluştur
+    const theadRow = document.querySelector('#weekly-grid-head tr');
+    theadRow.innerHTML = `<th>GW</th><th>Hafta Birincisi</th><th>Puan</th>`;
+
+    const tbody = document.getElementById('weekly-grid-body');
+    tbody.innerHTML = '';
+
+    topPerGW.forEach(item => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${item.gw}</td><td>${item.player}</td><td>${item.points}</td>`;
+      tbody.appendChild(tr);
+    });
+
+  } catch (err) {
+    console.error('Error building weekly top grid:', err);
+  }
+}
+
+    document.addEventListener('DOMContentLoaded', fetchStandings);
+  </script>
+
+</body>
+
+</html>
