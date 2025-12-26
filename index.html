@@ -117,7 +117,7 @@
 
     async function fetchHistory(entryId, playerName) {
       try {
-        const url = `https://cors-anywhere.com/https://fantasy.premierleague.com/api/entry/${entryId}/history/`;
+        const url = `https://fpl-proxy.toredemirtas.workers.dev/entry/${p.entry}/history`;
         const res = await fetch(url);
         const data = await res.json();
 
@@ -207,3 +207,4 @@ async function buildWeeklyTopGrid(players) {
 </body>
 
 </html>
+
