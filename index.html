@@ -91,7 +91,7 @@
 
     async function fetchStandings() {
       try {
-        const url = 'https://cors-anywhere.com/https://fantasy.premierleague.com/api/leagues-classic/703668/standings/';
+        const url = 'https://fpl-proxy.toredemirtas.workers.dev/standings';
         const res = await fetch(url);
         const data = await res.json();
         const results = data.standings.results;
@@ -154,7 +154,7 @@ async function buildWeeklyTopGrid(players) {
 
       const batchResults = await Promise.all(batch.map(async p => {
         try {
-          const url = `https://cors-anywhere.com/https://fantasy.premierleague.com/api/entry/${p.entry}/history/`;
+          const url = `https://fpl-proxy.toredemirtas.workers.dev/entry/${p.entry}/history/`;
           const res = await fetch(url);
           if (!res.ok) throw new Error(`HTTP error ${res.status}`);
           const data = await res.json();
