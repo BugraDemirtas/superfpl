@@ -608,8 +608,9 @@
       mostWeeklyListEl.innerHTML = '';
 
       if (ranking.length) {
-        const [topName, topCount] = ranking[0];
-        mostWeeklyEl.textContent = topName;
+        const topCount = ranking[0][1];
+        const topNames = ranking.filter(([, count]) => count === topCount).map(([name]) => name);
+        mostWeeklyEl.textContent = topNames.join(', ');
         mostWeeklySubEl.textContent = `${topCount} kez hafta birincisi`;
         ranking.forEach(([name, count]) => {
           const li = document.createElement('li');
