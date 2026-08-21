@@ -489,14 +489,21 @@
       const topPerGW = [];
 
       for (let gw = 1; gw <= maxGW; gw++) {
-        let topPlayer = { player_name: 'N/A', points: -1 };
+        let topPoints = -1;
+        let topNames = [];
         allHistory.forEach(p => {
           const gwData = p.history.find(h => h.event === gw);
-          if (gwData && gwData.points > topPlayer.points) {
-            topPlayer = { player_name: p.player_name, points: gwData.points };
+          if (gwData) {
+            if (gwData.points > topPoints) {
+              topPoints = gwData.points;
+              topNames = [p.player_name];
+            } else if (gwData.points === topPoints) {
+              topNames.push(p.player_name);
+            }
           }
         });
-        topPerGW.push({ gw, player: topPlayer.player_name, points: topPlayer.points });
+        const players = topNames.length ? topNames : ['N/A'];
+        topPerGW.push({ gw, players, player: players.join(', '), points: topNames.length ? topPoints : -1 });
       }
 
       return { maxGW, topPerGW };
@@ -586,8 +593,10 @@
       // En çok hafta şampiyonluğu: haftalık birinciliklerin sayısı
       const winCounts = {};
       topPerGW.forEach(item => {
-        if (item.player === 'N/A') return;
-        winCounts[item.player] = (winCounts[item.player] || 0) + 1;
+        item.players.forEach(name => {
+          if (name === 'N/A') return;
+          winCounts[name] = (winCounts[name] || 0) + 1;
+        });
       });
       const ranking = Object.entries(winCounts)
         .sort((a, b) => b[1] - a[1])
