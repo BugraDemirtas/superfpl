@@ -211,10 +211,21 @@
       background: rgba(63, 142, 252, .08) !important;
     }
 
+    .standings-table td,
+    .standings-table th {
+      vertical-align: middle;
+    }
+
     .player-cell {
       display: flex;
       align-items: center;
       gap: 8px;
+      min-width: 0;
+    }
+
+    .player-cell .player-info {
+      min-width: 0;
+      overflow-wrap: break-word;
     }
 
     .club-badge {
@@ -228,6 +239,40 @@
       width: 22px;
       height: 22px;
       object-fit: contain;
+    }
+
+    @media (max-width: 480px) {
+
+      .standings-table th,
+      .standings-table td {
+        padding: .5rem .35rem;
+        font-size: .78rem;
+      }
+
+      .club-badge {
+        width: 18px;
+        height: 18px;
+      }
+
+      .player-cell {
+        gap: 6px;
+      }
+
+      #history-table th,
+      #history-table td {
+        padding: .4rem .3rem;
+        font-size: .72rem;
+        white-space: nowrap;
+      }
+
+      .chip-icon {
+        width: 16px;
+        height: 16px;
+      }
+
+      .modal-body {
+        padding: .75rem;
+      }
     }
   </style>
 </head>
@@ -269,8 +314,8 @@
             <tr>
               <th>Sıra</th>
               <th>İsim / Takım</th>
-              <th>GW Puanı</th>
-              <th>Toplam Puan</th>
+              <th><span class="d-none d-sm-inline">GW Puanı</span><span class="d-sm-none">GW</span></th>
+              <th><span class="d-none d-sm-inline">Toplam Puan</span><span class="d-sm-none">Toplam</span></th>
             </tr>
           </thead>
           <tbody>
@@ -352,7 +397,7 @@
 
   <!-- Player history modal -->
   <div class="modal fade" id="historyModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-dialog modal-dialog-scrollable modal-fullscreen-sm-down">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="historyModalTitle">Özet</h5>
@@ -365,8 +410,8 @@
                 <tr>
                   <th>GW</th>
                   <th>Puan</th>
-                  <th>Toplam Puan</th>
-                  <th>Bench Puanı</th>
+                  <th><span class="d-none d-sm-inline">Toplam Puan</span><span class="d-sm-none">Toplam</span></th>
+                  <th><span class="d-none d-sm-inline">Bench Puanı</span><span class="d-sm-none">Bench</span></th>
                   <th>Transfer</th>
                   <th>Çip</th>
                 </tr>
@@ -442,7 +487,7 @@
           <td>
             <div class="player-cell">
               ${item.club_badge_src ? `<img src="${item.club_badge_src}" class="club-badge" alt="" onerror="this.remove()">` : ''}
-              <div>${item.player_name}<br><small class="text-muted">${item.entry_name}</small></div>
+              <div class="player-info">${item.player_name}<br><small class="text-muted">${item.entry_name}</small></div>
             </div>
           </td>
           <td>${item.event_total}</td>
