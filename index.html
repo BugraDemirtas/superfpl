@@ -326,21 +326,52 @@
     }
 
     .pitch {
-      background: linear-gradient(180deg, #1e8f4e 0%, #1c7d46 100%);
-      background-image: repeating-linear-gradient(180deg,
-          rgba(255, 255, 255, .05) 0,
-          rgba(255, 255, 255, .05) 40px,
+      position: relative;
+      overflow: hidden;
+      background-color: #1c7d46;
+      background-image:
+        repeating-linear-gradient(180deg,
+          rgba(255, 255, 255, .06) 0,
+          rgba(255, 255, 255, .06) 40px,
           transparent 40px,
-          transparent 80px);
+          transparent 80px),
+        linear-gradient(180deg, #1e9a56 0%, #1c7d46 100%);
+      border: 2px solid rgba(255, 255, 255, .4);
       border-radius: 12px;
-      padding: 16px 8px;
+      padding: 20px 8px;
       display: flex;
       flex-direction: column;
       justify-content: space-evenly;
       gap: 18px;
     }
 
+    .pitch::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 100px;
+      height: 100px;
+      transform: translate(-50%, -50%);
+      border: 2px solid rgba(255, 255, 255, .35);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .pitch::after {
+      content: '';
+      position: absolute;
+      left: 6%;
+      right: 6%;
+      top: 50%;
+      height: 2px;
+      background: rgba(255, 255, 255, .35);
+      pointer-events: none;
+    }
+
     .pitch-row {
+      position: relative;
+      z-index: 1;
       display: flex;
       justify-content: space-evenly;
       align-items: flex-start;
@@ -392,6 +423,11 @@
 
     .pc-v {
       background: #6c757d;
+    }
+
+    .pc-c-inactive {
+      background: #6c757d;
+      opacity: .6;
     }
 
     .pc-subtag {
@@ -805,11 +841,27 @@
 
         const summaries = await Promise.all(picks.map(p => fetchElementSummary(p.element)));
         const pointsByElement = {};
+        const minutesByElement = {};
         picks.forEach((p, i) => {
           const hist = (summaries[i] && summaries[i].history) || [];
           const gwEntry = hist.find(h => h.round === Number(gw));
           pointsByElement[p.element] = gwEntry ? gwEntry.total_points : null;
+          minutesByElement[p.element] = gwEntry ? gwEntry.minutes : 0;
         });
+
+        // Kaptan oynamadıysa (0 dakika) armband vice-captain'e geçer; ikisi de oynamadıysa çarpan uygulanmaz.
+        const captainPick = picks.find(p => p.is_captain);
+        const vicePick = picks.find(p => p.is_vice_captain);
+        const baseArmbandMultiplier = picksRes.active_chip === '3xc' ? 3 : 2;
+        let armbandElement = null;
+        let armbandMultiplier = 1;
+        if (captainPick && minutesByElement[captainPick.element] > 0) {
+          armbandElement = captainPick.element;
+          armbandMultiplier = baseArmbandMultiplier;
+        } else if (vicePick && minutesByElement[vicePick.element] > 0) {
+          armbandElement = vicePick.element;
+          armbandMultiplier = baseArmbandMultiplier;
+        }
 
         let leagueTopText = '';
         if (allHistoryCache) {
@@ -838,10 +890,18 @@
           if (!el) return '';
           const team = teamsById[el.team];
           const shirtUrl = getShirtUrl(el.element_type, team ? team.code : 0);
-          const pts = pointsByElement[p.element];
+          const rawPts = pointsByElement[p.element];
+          let effectiveMultiplier = p.multiplier;
+          if (!isBench && (p.is_captain || p.is_vice_captain)) {
+            effectiveMultiplier = p.element === armbandElement ? armbandMultiplier : 1;
+          }
+          const pts = (!isBench && rawPts !== null) ? rawPts * effectiveMultiplier : rawPts;
+          const hasArmband = p.element === armbandElement;
           const badge = p.is_captain
-            ? '<span class="pc-armband pc-c">C</span>'
-            : (p.is_vice_captain ? '<span class="pc-armband pc-v">V</span>' : '');
+            ? `<span class="pc-armband ${hasArmband ? 'pc-c' : 'pc-c-inactive'}">C</span>`
+            : (p.is_vice_captain
+              ? `<span class="pc-armband ${hasArmband ? 'pc-c' : 'pc-v'}">${hasArmband ? 'VC' : 'V'}</span>`
+              : '');
           const wasSubbedOut = isBench && autoOutSet.has(p.element);
           const subTag = autoInSet.has(p.element)
             ? '<span class="pc-subtag pc-in">IN</span>'
