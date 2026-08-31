@@ -210,6 +210,25 @@
     .standings-table tbody tr:hover {
       background: rgba(63, 142, 252, .08) !important;
     }
+
+    .player-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .club-badge {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+      flex: 0 0 auto;
+    }
+
+    .chip-icon {
+      width: 22px;
+      height: 22px;
+      object-fit: contain;
+    }
   </style>
 </head>
 
@@ -347,6 +366,9 @@
                   <th>GW</th>
                   <th>Puan</th>
                   <th>Toplam Puan</th>
+                  <th>Bench Puanı</th>
+                  <th>Transfer</th>
+                  <th>Çip</th>
                 </tr>
               </thead>
               <tbody>
@@ -374,6 +396,13 @@
       home: 'Süper Lig FPL Puan Durumu',
       weekly: 'Haftalık Toplamlar',
       awards: 'Ödüller'
+    };
+
+    const CHIP_ICONS = {
+      bboost: { src: 'https://fantasy.premierleague.com/img/chips/bboost-120.png', label: 'Bench Boost' },
+      '3xc': { src: 'https://fantasy.premierleague.com/img/chips/3xc-120.png', label: 'Triple C' },
+      wildcard: { src: 'https://fantasy.premierleague.com/img/chips/wildcard-120.png', label: 'Wildcard' },
+      freehit: { src: 'https://fantasy.premierleague.com/img/chips/freehit-120.png', label: 'Free Hit' },
     };
 
     let currentPlayers = [];
@@ -410,7 +439,12 @@
           const tr = document.createElement('tr');
           tr.innerHTML = `
           <td>${item.rank}</td>
-          <td>${item.player_name}<br><small class="text-muted">${item.entry_name}</small></td>
+          <td>
+            <div class="player-cell">
+              ${item.club_badge_src ? `<img src="${item.club_badge_src}" class="club-badge" alt="" onerror="this.remove()">` : ''}
+              <div>${item.player_name}<br><small class="text-muted">${item.entry_name}</small></div>
+            </div>
+          </td>
           <td>${item.event_total}</td>
           <td>${item.total}</td>
         `;
@@ -429,13 +463,29 @@
         const res = await fetch(url);
         const data = await res.json();
 
+        const chipByEvent = {};
+        (data.chips || []).forEach(c => {
+          chipByEvent[c.event] = CHIP_ICONS[c.name] || null;
+        });
+
         historyTableBody.innerHTML = '';
         data.current.forEach(item => {
+          const chip = chipByEvent[item.event];
+          const chipHtml = chip
+            ? `<img src="${chip.src}" class="chip-icon" alt="${chip.label}" title="${chip.label}">`
+            : '';
+          const transferText = item.event_transfers_cost > 0
+            ? `${item.event_transfers} (-${item.event_transfers_cost})`
+            : `${item.event_transfers}`;
+
           const tr = document.createElement('tr');
           tr.innerHTML = `
           <td>${item.event}</td>
           <td>${item.points}</td>
           <td>${item.total_points}</td>
+          <td>${item.points_on_bench}</td>
+          <td>${transferText}</td>
+          <td>${chipHtml}</td>
         `;
           historyTableBody.appendChild(tr);
         });
