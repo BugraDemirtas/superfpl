@@ -273,6 +273,190 @@
       .modal-body {
         padding: .75rem;
       }
+
+      .pc-shirt-wrap,
+      .pc-shirt {
+        width: 34px;
+        height: 34px;
+      }
+
+      .pitch-card {
+        width: 50px;
+      }
+
+      .pc-name,
+      .pc-points {
+        font-size: .6rem;
+      }
+
+      .pitch-row {
+        gap: 4px;
+      }
+
+      .team-stats-bar strong {
+        font-size: .85rem;
+      }
+    }
+
+    /* ---- Team pitch view ---- */
+    .team-stats-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .team-stats-bar>div {
+      flex: 1 1 100px;
+      background: var(--content-bg);
+      border-radius: 10px;
+      padding: 8px 10px;
+      text-align: center;
+    }
+
+    .team-stats-bar strong {
+      display: block;
+      font-size: 1rem;
+    }
+
+    .team-stats-bar span {
+      font-size: .68rem;
+      color: #6c757d;
+      text-transform: uppercase;
+    }
+
+    .pitch {
+      background: linear-gradient(180deg, #1e8f4e 0%, #1c7d46 100%);
+      background-image: repeating-linear-gradient(180deg,
+          rgba(255, 255, 255, .05) 0,
+          rgba(255, 255, 255, .05) 40px,
+          transparent 40px,
+          transparent 80px);
+      border-radius: 12px;
+      padding: 16px 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-evenly;
+      gap: 18px;
+    }
+
+    .pitch-row {
+      display: flex;
+      justify-content: space-evenly;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .pitch-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 64px;
+      text-align: center;
+    }
+
+    .pc-shirt-wrap {
+      position: relative;
+      width: 44px;
+      height: 44px;
+    }
+
+    .pc-shirt {
+      width: 44px;
+      height: 44px;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .35));
+    }
+
+    .pc-armband {
+      position: absolute;
+      top: -4px;
+      right: -6px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      font-size: .6rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, .4);
+    }
+
+    .pc-c {
+      background: #ffd60a;
+      color: #14213d;
+    }
+
+    .pc-v {
+      background: #6c757d;
+    }
+
+    .pc-subtag {
+      position: absolute;
+      bottom: -4px;
+      left: -8px;
+      font-size: .55rem;
+      font-weight: 700;
+      padding: 0 3px;
+      border-radius: 4px;
+      color: #fff;
+    }
+
+    .pc-in {
+      background: #2ecc71;
+    }
+
+    .pc-out {
+      background: #e74c3c;
+    }
+
+    .pc-dim {
+      opacity: .55;
+    }
+
+    .pc-name {
+      font-size: .68rem;
+      font-weight: 600;
+      color: #fff;
+      background: rgba(0, 0, 0, .55);
+      padding: 1px 4px;
+      border-radius: 4px;
+      margin-top: 4px;
+      max-width: 62px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pc-points {
+      font-size: .72rem;
+      font-weight: 700;
+      color: #14213d;
+      background: #fff;
+      border-radius: 4px;
+      padding: 0 5px;
+      margin-top: 2px;
+    }
+
+    .bench-section {
+      margin-top: 14px;
+    }
+
+    .bench-label {
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #6c757d;
+      margin-bottom: 6px;
+    }
+
+    .bench-row {
+      background: #e8f5ec;
+      border-radius: 10px;
+      padding: 10px 6px;
     }
   </style>
 </head>
@@ -414,6 +598,7 @@
                   <th><span class="d-none d-sm-inline">Bench Puanı</span><span class="d-sm-none">Bench</span></th>
                   <th>Transfer</th>
                   <th>Çip</th>
+                  <th>Takım</th>
                 </tr>
               </thead>
               <tbody>
@@ -421,6 +606,21 @@
               </tbody>
             </table>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Team pitch modal -->
+  <div class="modal fade" id="teamModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-fullscreen-sm-down modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="teamModalTitle">Kadro</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+        </div>
+        <div class="modal-body" id="teamModalBody">
+          <!-- Saha buraya render edilecek -->
         </div>
       </div>
     </div>
@@ -531,7 +731,12 @@
           <td>${item.points_on_bench}</td>
           <td>${transferText}</td>
           <td>${chipHtml}</td>
+          <td><button type="button" class="btn btn-sm btn-outline-primary team-view-btn">Takımı Gör</button></td>
         `;
+          tr.querySelector('.team-view-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            showTeamView(entryId, item.event, playerName);
+          });
           historyTableBody.appendChild(tr);
         });
 
@@ -541,6 +746,147 @@
 
       } catch (err) {
         console.error('Error fetching history:', err);
+      }
+    }
+
+    // ---------- Team pitch view ----------
+    let allDataCache = null;
+    let allDataPromise = null;
+    function ensureAllDataLoaded() {
+      if (allDataCache) return Promise.resolve(allDataCache);
+      if (allDataPromise) return allDataPromise;
+      allDataPromise = fetch(`${API_BASE}/alldata`)
+        .then(res => res.json())
+        .then(data => { allDataCache = data; return data; });
+      return allDataPromise;
+    }
+
+    const elementSummaryCache = {};
+    function fetchElementSummary(elementId) {
+      if (elementSummaryCache[elementId]) return elementSummaryCache[elementId];
+      const p = fetch(`${API_BASE}/element-summary/${elementId}/`)
+        .then(res => res.json())
+        .catch(() => ({ history: [] }));
+      elementSummaryCache[elementId] = p;
+      return p;
+    }
+
+    function getShirtUrl(elementTypeId, teamCode) {
+      const gkSuffix = elementTypeId === 1 ? '_1' : '';
+      return `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${teamCode}${gkSuffix}-66.png`;
+    }
+
+    async function showTeamView(entryId, gw, playerName) {
+      const teamModalTitle = document.getElementById('teamModalTitle');
+      const teamModalBody = document.getElementById('teamModalBody');
+      teamModalTitle.textContent = `${playerName} - GW${gw} Kadrosu`;
+      teamModalBody.innerHTML = '<div class="text-muted">Yükleniyor...</div>';
+      const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('teamModal'));
+      modal.show();
+
+      try {
+        const [allData, picksRes] = await Promise.all([
+          ensureAllDataLoaded(),
+          fetch(`${API_BASE}/entry/${entryId}/event/${gw}/picks/`).then(r => r.json())
+        ]);
+
+        const elementsById = {};
+        allData.elements.forEach(e => { elementsById[e.id] = e; });
+        const elementTypesById = {};
+        allData.element_types.forEach(et => { elementTypesById[et.id] = et; });
+        const teamsById = {};
+        allData.teams.forEach(t => { teamsById[t.id] = t; });
+
+        const picks = picksRes.picks || [];
+        const entryHistory = picksRes.entry_history || {};
+        const autoSubs = picksRes.automatic_subs || [];
+        const autoInSet = new Set(autoSubs.map(s => s.element_in));
+        const autoOutSet = new Set(autoSubs.map(s => s.element_out));
+
+        const summaries = await Promise.all(picks.map(p => fetchElementSummary(p.element)));
+        const pointsByElement = {};
+        picks.forEach((p, i) => {
+          const hist = (summaries[i] && summaries[i].history) || [];
+          const gwEntry = hist.find(h => h.round === Number(gw));
+          pointsByElement[p.element] = gwEntry ? gwEntry.total_points : null;
+        });
+
+        let leagueTopText = '';
+        if (allHistoryCache) {
+          const { topPerGW } = computeWeeklyTops(allHistoryCache);
+          const gwTop = topPerGW.find(t => t.gw === Number(gw));
+          if (gwTop && gwTop.points >= 0) leagueTopText = `${gwTop.player} (${gwTop.points})`;
+        }
+
+        const starters = picks.filter(p => p.multiplier > 0)
+          .sort((a, b) => {
+            const elA = elementsById[a.element], elB = elementsById[b.element];
+            return (elA ? elA.element_type : 0) - (elB ? elB.element_type : 0);
+          });
+        const bench = picks.filter(p => p.multiplier === 0)
+          .sort((a, b) => a.position - b.position);
+
+        const rowsByType = {};
+        starters.forEach(p => {
+          const el = elementsById[p.element];
+          if (!el) return;
+          (rowsByType[el.element_type] = rowsByType[el.element_type] || []).push(p);
+        });
+
+        function renderCard(p, isBench) {
+          const el = elementsById[p.element];
+          if (!el) return '';
+          const team = teamsById[el.team];
+          const shirtUrl = getShirtUrl(el.element_type, team ? team.code : 0);
+          const pts = pointsByElement[p.element];
+          const badge = p.is_captain
+            ? '<span class="pc-armband pc-c">C</span>'
+            : (p.is_vice_captain ? '<span class="pc-armband pc-v">V</span>' : '');
+          const wasSubbedOut = isBench && autoOutSet.has(p.element);
+          const subTag = autoInSet.has(p.element)
+            ? '<span class="pc-subtag pc-in">IN</span>'
+            : (wasSubbedOut ? '<span class="pc-subtag pc-out">OUT</span>' : '');
+          return `
+            <div class="pitch-card ${wasSubbedOut ? 'pc-dim' : ''}">
+              <div class="pc-shirt-wrap">
+                <img src="${shirtUrl}" class="pc-shirt" alt="" onerror="this.style.visibility='hidden'">
+                ${badge}
+                ${subTag}
+              </div>
+              <div class="pc-name">${el.web_name}</div>
+              <div class="pc-points">${pts === null ? '-' : pts}</div>
+            </div>`;
+        }
+
+        const typeOrder = Object.keys(elementTypesById).map(Number).sort((a, b) => a - b);
+        const pitchRowsHtml = typeOrder
+          .filter(t => rowsByType[t] && rowsByType[t].length)
+          .map(t => `<div class="pitch-row">${rowsByType[t].map(p => renderCard(p, false)).join('')}</div>`)
+          .join('');
+
+        const benchHtml = bench.map(p => renderCard(p, true)).join('');
+
+        const transferText = entryHistory.event_transfers_cost > 0
+          ? `${entryHistory.event_transfers} (-${entryHistory.event_transfers_cost})`
+          : `${entryHistory.event_transfers ?? '-'}`;
+
+        teamModalBody.innerHTML = `
+          <div class="team-stats-bar">
+            <div><strong>${entryHistory.points ?? '-'}</strong><span>GW Puanı</span></div>
+            <div><strong>${entryHistory.total_points ?? '-'}</strong><span>Toplam Puan</span></div>
+            <div><strong>${entryHistory.points_on_bench ?? '-'}</strong><span>Bench Puanı</span></div>
+            <div><strong>${transferText}</strong><span>Transfer</span></div>
+            ${leagueTopText ? `<div><strong>${leagueTopText}</strong><span>Lig İçi En Yüksek</span></div>` : ''}
+          </div>
+          <div class="pitch">${pitchRowsHtml}</div>
+          <div class="bench-section">
+            <div class="bench-label">Yedekler</div>
+            <div class="pitch-row bench-row">${benchHtml}</div>
+          </div>
+        `;
+      } catch (err) {
+        console.error('Error loading team view:', err);
+        teamModalBody.innerHTML = '<div class="text-danger">Kadro yüklenemedi.</div>';
       }
     }
 
