@@ -235,6 +235,20 @@
       flex: 0 0 auto;
     }
 
+    .mini-trophy {
+      font-size: .72rem;
+      margin-left: 5px;
+    }
+
+    .trophy-gold {
+      color: #ffd700;
+    }
+
+    .trophy-silver {
+      color: #c0c0c0;
+      margin-left: 3px;
+    }
+
     .chip-icon {
       width: 22px;
       height: 22px;
@@ -482,6 +496,9 @@
     }
 
     .bench-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       font-size: .75rem;
       font-weight: 700;
       text-transform: uppercase;
@@ -489,10 +506,45 @@
       margin-bottom: 6px;
     }
 
+    .bench-boost-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: linear-gradient(135deg, #ffd60a, #ff9f1c);
+      color: #14213d;
+      font-weight: 700;
+      font-size: .65rem;
+      text-transform: none;
+      padding: 2px 8px 2px 4px;
+      border-radius: 999px;
+    }
+
+    .bench-boost-badge img {
+      width: 14px;
+      height: 14px;
+      object-fit: contain;
+    }
+
     .bench-row {
       background: #e8f5ec;
       border-radius: 10px;
       padding: 10px 6px;
+    }
+
+    .bench-boost-glow {
+      animation: benchBoostPulse 1.8s ease-in-out infinite;
+    }
+
+    @keyframes benchBoostPulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 2px rgba(255, 193, 7, .4), 0 0 12px rgba(255, 193, 7, .35);
+      }
+
+      50% {
+        box-shadow: 0 0 0 2px rgba(255, 193, 7, .75), 0 0 26px rgba(255, 193, 7, .8);
+      }
     }
   </style>
 </head>
@@ -723,7 +775,7 @@
           <td>
             <div class="player-cell">
               ${item.club_badge_src ? `<img src="${item.club_badge_src}" class="club-badge" alt="" onerror="this.remove()">` : ''}
-              <div class="player-info">${item.player_name}<br><small class="text-muted">${item.entry_name}</small></div>
+              <div class="player-info">${item.player_name}${Number(item.entry) === 467838 ? '<i class="bi bi-trophy-fill mini-trophy trophy-gold" title="Altın Kupa"></i><i class="bi bi-trophy-fill mini-trophy trophy-silver" title="Gümüş Kupa"></i>' : ''}<br><small class="text-muted">${item.entry_name}</small></div>
             </div>
           </td>
           <td>${item.event_total}</td>
@@ -838,6 +890,7 @@
         const autoSubs = picksRes.automatic_subs || [];
         const autoInSet = new Set(autoSubs.map(s => s.element_in));
         const autoOutSet = new Set(autoSubs.map(s => s.element_out));
+        const bboostActive = picksRes.active_chip === 'bboost';
 
         const summaries = await Promise.all(picks.map(p => fetchElementSummary(p.element)));
         const pointsByElement = {};
@@ -870,13 +923,18 @@
           if (gwTop && gwTop.points >= 0) leagueTopText = `${gwTop.player} (${gwTop.points})`;
         }
 
-        const starters = picks.filter(p => p.multiplier > 0)
-          .sort((a, b) => {
-            const elA = elementsById[a.element], elB = elementsById[b.element];
-            return (elA ? elA.element_type : 0) - (elB ? elB.element_type : 0);
-          });
-        const bench = picks.filter(p => p.multiplier === 0)
-          .sort((a, b) => a.position - b.position);
+        // Bench boost aktifse herkes puana katılır; sahayı boş bırakıp hepsini "Yedekler" bölümünde göster.
+        const starters = bboostActive
+          ? []
+          : picks.filter(p => p.multiplier > 0)
+            .sort((a, b) => {
+              const elA = elementsById[a.element], elB = elementsById[b.element];
+              return (elA ? elA.element_type : 0) - (elB ? elB.element_type : 0);
+            });
+        const bench = bboostActive
+          ? [...picks].sort((a, b) => a.position - b.position)
+          : picks.filter(p => p.multiplier === 0)
+            .sort((a, b) => a.position - b.position);
 
         const rowsByType = {};
         starters.forEach(p => {
@@ -924,7 +982,7 @@
           .map(t => `<div class="pitch-row">${rowsByType[t].map(p => renderCard(p, false)).join('')}</div>`)
           .join('');
 
-        const benchHtml = bench.map(p => renderCard(p, true)).join('');
+        const benchHtml = bench.map(p => renderCard(p, !bboostActive)).join('');
 
         const transferText = entryHistory.event_transfers_cost > 0
           ? `${entryHistory.event_transfers} (-${entryHistory.event_transfers_cost})`
@@ -938,10 +996,13 @@
             <div><strong>${transferText}</strong><span>Transfer</span></div>
             ${leagueTopText ? `<div><strong>${leagueTopText}</strong><span>Lig İçi En Yüksek</span></div>` : ''}
           </div>
-          <div class="pitch">${pitchRowsHtml}</div>
+          ${bboostActive ? '' : `<div class="pitch">${pitchRowsHtml}</div>`}
           <div class="bench-section">
-            <div class="bench-label">Yedekler</div>
-            <div class="pitch-row bench-row">${benchHtml}</div>
+            <div class="bench-label">
+              Yedekler
+              ${bboostActive ? `<span class="bench-boost-badge"><img src="${CHIP_ICONS.bboost.src}" alt="">Bench Boost Aktif</span>` : ''}
+            </div>
+            <div class="pitch-row bench-row ${bboostActive ? 'bench-boost-glow' : ''}">${benchHtml}</div>
           </div>
         `;
       } catch (err) {
