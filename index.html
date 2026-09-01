@@ -383,6 +383,44 @@
       pointer-events: none;
     }
 
+    .pitch-corner {
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .corner-tl {
+      top: -11px;
+      left: -11px;
+      border-right-color: rgba(255, 255, 255, .4);
+      border-bottom-color: rgba(255, 255, 255, .4);
+    }
+
+    .corner-tr {
+      top: -11px;
+      right: -11px;
+      border-left-color: rgba(255, 255, 255, .4);
+      border-bottom-color: rgba(255, 255, 255, .4);
+    }
+
+    .corner-bl {
+      bottom: -11px;
+      left: -11px;
+      border-right-color: rgba(255, 255, 255, .4);
+      border-top-color: rgba(255, 255, 255, .4);
+    }
+
+    .corner-br {
+      bottom: -11px;
+      right: -11px;
+      border-left-color: rgba(255, 255, 255, .4);
+      border-top-color: rgba(255, 255, 255, .4);
+    }
+
     .pitch-row {
       position: relative;
       z-index: 1;
@@ -923,18 +961,15 @@
           if (gwTop && gwTop.points >= 0) leagueTopText = `${gwTop.player} (${gwTop.points})`;
         }
 
-        // Bench boost aktifse herkes puana katılır; sahayı boş bırakıp hepsini "Yedekler" bölümünde göster.
-        const starters = bboostActive
-          ? []
-          : picks.filter(p => p.multiplier > 0)
-            .sort((a, b) => {
-              const elA = elementsById[a.element], elB = elementsById[b.element];
-              return (elA ? elA.element_type : 0) - (elB ? elB.element_type : 0);
-            });
-        const bench = bboostActive
-          ? [...picks].sort((a, b) => a.position - b.position)
-          : picks.filter(p => p.multiplier === 0)
-            .sort((a, b) => a.position - b.position);
+        // Saha/yedek ayrımı her zaman kadrodaki gerçek dizilişe (pozisyon 1-11 saha, 12-15 yedek) göre yapılır;
+        // bench boost sadece yedeklerin puanının da sayılmasını ve görsel olarak vurgulanmasını sağlar.
+        const starters = picks.filter(p => p.position <= 11)
+          .sort((a, b) => {
+            const elA = elementsById[a.element], elB = elementsById[b.element];
+            return (elA ? elA.element_type : 0) - (elB ? elB.element_type : 0);
+          });
+        const bench = picks.filter(p => p.position > 11)
+          .sort((a, b) => a.position - b.position);
 
         const rowsByType = {};
         starters.forEach(p => {
@@ -943,24 +978,25 @@
           (rowsByType[el.element_type] = rowsByType[el.element_type] || []).push(p);
         });
 
-        function renderCard(p, isBench) {
+        function renderCard(p) {
           const el = elementsById[p.element];
           if (!el) return '';
           const team = teamsById[el.team];
           const shirtUrl = getShirtUrl(el.element_type, team ? team.code : 0);
           const rawPts = pointsByElement[p.element];
-          let effectiveMultiplier = p.multiplier;
-          if (!isBench && (p.is_captain || p.is_vice_captain)) {
+          const counts = p.position <= 11 || bboostActive;
+          let effectiveMultiplier = 1;
+          if (counts && (p.is_captain || p.is_vice_captain)) {
             effectiveMultiplier = p.element === armbandElement ? armbandMultiplier : 1;
           }
-          const pts = (!isBench && rawPts !== null) ? rawPts * effectiveMultiplier : rawPts;
+          const pts = (counts && rawPts !== null) ? rawPts * effectiveMultiplier : rawPts;
           const hasArmband = p.element === armbandElement;
           const badge = p.is_captain
             ? `<span class="pc-armband ${hasArmband ? 'pc-c' : 'pc-c-inactive'}">C</span>`
             : (p.is_vice_captain
               ? `<span class="pc-armband ${hasArmband ? 'pc-c' : 'pc-v'}">${hasArmband ? 'VC' : 'V'}</span>`
               : '');
-          const wasSubbedOut = isBench && autoOutSet.has(p.element);
+          const wasSubbedOut = autoOutSet.has(p.element);
           const subTag = autoInSet.has(p.element)
             ? '<span class="pc-subtag pc-in">IN</span>'
             : (wasSubbedOut ? '<span class="pc-subtag pc-out">OUT</span>' : '');
@@ -979,10 +1015,10 @@
         const typeOrder = Object.keys(elementTypesById).map(Number).sort((a, b) => a - b);
         const pitchRowsHtml = typeOrder
           .filter(t => rowsByType[t] && rowsByType[t].length)
-          .map(t => `<div class="pitch-row">${rowsByType[t].map(p => renderCard(p, false)).join('')}</div>`)
+          .map(t => `<div class="pitch-row">${rowsByType[t].map(p => renderCard(p)).join('')}</div>`)
           .join('');
 
-        const benchHtml = bench.map(p => renderCard(p, !bboostActive)).join('');
+        const benchHtml = bench.map(p => renderCard(p)).join('');
 
         const transferText = entryHistory.event_transfers_cost > 0
           ? `${entryHistory.event_transfers} (-${entryHistory.event_transfers_cost})`
@@ -996,7 +1032,13 @@
             <div><strong>${transferText}</strong><span>Transfer</span></div>
             ${leagueTopText ? `<div><strong>${leagueTopText}</strong><span>Lig İçi En Yüksek</span></div>` : ''}
           </div>
-          ${bboostActive ? '' : `<div class="pitch">${pitchRowsHtml}</div>`}
+          <div class="pitch">
+            <div class="pitch-corner corner-tl"></div>
+            <div class="pitch-corner corner-tr"></div>
+            <div class="pitch-corner corner-bl"></div>
+            <div class="pitch-corner corner-br"></div>
+            ${pitchRowsHtml}
+          </div>
           <div class="bench-section">
             <div class="bench-label">
               Yedekler
