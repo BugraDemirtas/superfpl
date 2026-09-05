@@ -164,8 +164,14 @@
       display: block;
     }
 
+    .table-responsive {
+      border-radius: 14px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, .06);
+    }
+
     .table-responsive table {
       background: #fff;
+      margin-bottom: 0;
     }
 
     .card.award-card {
@@ -239,13 +245,6 @@
       overflow-wrap: break-word;
     }
 
-    .club-badge {
-      width: 24px;
-      height: 24px;
-      object-fit: contain;
-      flex: 0 0 auto;
-    }
-
     .mini-trophy {
       font-size: .72rem;
       margin-left: 5px;
@@ -272,31 +271,32 @@
     .chip-badge {
       display: inline-flex;
       align-items: center;
-      gap: 3px;
-      background: rgba(63, 142, 252, .12);
-      color: var(--sidebar-active);
-      font-size: .62rem;
+      gap: 4px;
+      background: #eef3fb;
+      border: 1px solid rgba(63, 142, 252, .4);
+      color: #2c6fd6;
+      font-size: .64rem;
       font-weight: 700;
       line-height: 1;
-      padding: 2px 6px 2px 3px;
-      border-radius: 999px;
+      padding: 3px 7px 3px 4px;
+      border-radius: 6px;
       white-space: nowrap;
     }
 
     .chip-badge img {
-      width: 13px;
-      height: 13px;
+      width: 15px;
+      height: 15px;
       object-fit: contain;
       flex: 0 0 auto;
     }
 
     .standings-table tbody tr.has-active-chip {
-      box-shadow: inset 3px 0 0 0 rgba(255, 193, 7, .55);
-      background: rgba(255, 193, 7, .07) !important;
+      box-shadow: inset 4px 0 0 0 #ffb300;
+      background: rgba(255, 193, 7, .22) !important;
     }
 
     .standings-table tbody tr.has-active-chip:hover {
-      background: rgba(255, 193, 7, .12) !important;
+      background: rgba(255, 193, 7, .3) !important;
     }
 
     .chip-icon {
@@ -313,24 +313,18 @@
         font-size: .78rem;
       }
 
-      .club-badge {
-        width: 18px;
-        height: 18px;
-      }
-
       .player-cell {
         gap: 6px;
       }
 
       .chip-badge {
-        font-size: .56rem;
-        padding: 1px 5px 1px 3px;
-        margin-left: 3px;
+        font-size: .58rem;
+        padding: 2px 6px 2px 3px;
       }
 
       .chip-badge img {
-        width: 11px;
-        height: 11px;
+        width: 13px;
+        height: 13px;
       }
 
       #history-table th,
@@ -875,7 +869,6 @@
           <td>${item.rank}</td>
           <td>
             <div class="player-cell">
-              ${item.club_badge_src ? `<img src="${item.club_badge_src}" class="club-badge" alt="" onerror="this.remove()">` : ''}
               <div class="player-info">${item.player_name}${Number(item.entry) === 467838 ? '<i class="bi bi-trophy-fill mini-trophy trophy-gold" title="25/26 Lig Şampiyonu"></i><i class="bi bi-trophy-fill mini-trophy trophy-silver" title="25/26 Kupa Şampiyonu"></i>' : ''}<br><small class="text-muted">${item.entry_name}</small><span class="chip-badge-slot" data-entry="${item.entry}"></span></div>
             </div>
           </td>
