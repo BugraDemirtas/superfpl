@@ -249,6 +249,29 @@
       margin-left: 3px;
     }
 
+    .chip-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: rgba(63, 142, 252, .12);
+      color: var(--sidebar-active);
+      font-size: .62rem;
+      font-weight: 700;
+      line-height: 1;
+      padding: 2px 6px 2px 3px;
+      border-radius: 999px;
+      margin-left: 5px;
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+
+    .chip-badge img {
+      width: 13px;
+      height: 13px;
+      object-fit: contain;
+      flex: 0 0 auto;
+    }
+
     .chip-icon {
       width: 22px;
       height: 22px;
@@ -270,6 +293,17 @@
 
       .player-cell {
         gap: 6px;
+      }
+
+      .chip-badge {
+        font-size: .56rem;
+        padding: 1px 5px 1px 3px;
+        margin-left: 3px;
+      }
+
+      .chip-badge img {
+        width: 11px;
+        height: 11px;
       }
 
       #history-table th,
@@ -770,14 +804,14 @@
     };
 
     const CHIP_ICONS = {
-      bboost: { src: 'https://fantasy.premierleague.com/img/chips/bboost-120.png', label: 'Bench Boost' },
-      '3xc': { src: 'https://fantasy.premierleague.com/img/chips/3xc-120.png', label: 'Triple C' },
-      wildcard: { src: 'https://fantasy.premierleague.com/img/chips/wildcard-120.png', label: 'Wildcard' },
-      freehit: { src: 'https://fantasy.premierleague.com/img/chips/freehit-120.png', label: 'Free Hit' },
+      bboost: { src: 'https://fantasy.premierleague.com/img/chips/bboost-120.png', label: 'Bench Boost', abbr: 'BB' },
+      '3xc': { src: 'https://fantasy.premierleague.com/img/chips/3xc-120.png', label: 'Triple Kaptan', abbr: '3C' },
+      wildcard: { src: 'https://fantasy.premierleague.com/img/chips/wildcard-120.png', label: 'Wildcard', abbr: 'WC' },
+      freehit: { src: 'https://fantasy.premierleague.com/img/chips/freehit-120.png', label: 'Free Hit', abbr: 'FH' },
     };
 
     let currentPlayers = [];
-    let allHistoryCache = null; // { player_name, entry, history }[]
+    let allHistoryCache = null; // { player_name, entry, history, chips }[]
     let historyLoadPromise = null;
 
     // ---------- Navigation ----------
@@ -813,7 +847,7 @@
           <td>
             <div class="player-cell">
               ${item.club_badge_src ? `<img src="${item.club_badge_src}" class="club-badge" alt="" onerror="this.remove()">` : ''}
-              <div class="player-info">${item.player_name}${Number(item.entry) === 467838 ? '<i class="bi bi-trophy-fill mini-trophy trophy-gold" title="Altın Kupa"></i><i class="bi bi-trophy-fill mini-trophy trophy-silver" title="Gümüş Kupa"></i>' : ''}<br><small class="text-muted">${item.entry_name}</small></div>
+              <div class="player-info">${item.player_name}${Number(item.entry) === 467838 ? '<i class="bi bi-trophy-fill mini-trophy trophy-gold" title="Altın Kupa"></i><i class="bi bi-trophy-fill mini-trophy trophy-silver" title="Gümüş Kupa"></i>' : ''}<span class="chip-badge-slot" data-entry="${item.entry}"></span><br><small class="text-muted">${item.entry_name}</small></div>
             </div>
           </td>
           <td>${item.event_total}</td>
@@ -823,8 +857,33 @@
           standingsTableBody.appendChild(tr);
         });
 
+        annotateStandingsChips();
+
       } catch (err) {
         console.error('Error fetching standings:', err);
+      }
+    }
+
+    // O haftaki (en güncel GW) aktif çipi olan oyunculara isimlerinin yanına rozet ekler.
+    async function annotateStandingsChips() {
+      try {
+        const allHistory = await ensureHistoryLoaded();
+        const { maxGW } = computeWeeklyTops(allHistory);
+        const chipByEntry = {};
+        allHistory.forEach(p => {
+          const chip = (p.chips || []).find(c => c.event === maxGW);
+          if (chip) chipByEntry[p.entry] = chip.name;
+        });
+
+        document.querySelectorAll('.chip-badge-slot').forEach(slot => {
+          const entryId = Number(slot.dataset.entry);
+          const chipName = chipByEntry[entryId];
+          const chip = chipName && CHIP_ICONS[chipName];
+          if (!chip) return;
+          slot.innerHTML = `<span class="chip-badge" title="${chip.label}"><img src="${chip.src}" alt="">${chip.abbr}</span>`;
+        });
+      } catch (err) {
+        console.error('Error annotating chip badges:', err);
       }
     }
 
@@ -1071,10 +1130,10 @@
               const res = await fetch(url);
               if (!res.ok) throw new Error(`HTTP error ${res.status}`);
               const data = await res.json();
-              return { player_name: p.player_name, entry: p.entry, history: data.current };
+              return { player_name: p.player_name, entry: p.entry, history: data.current, chips: data.chips || [] };
             } catch (e) {
               console.warn(`Failed fetching ${p.player_name}:`, e);
-              return { player_name: p.player_name, entry: p.entry, history: [] };
+              return { player_name: p.player_name, entry: p.entry, history: [], chips: [] };
             }
           }));
 
